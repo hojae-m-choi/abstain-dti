@@ -1,0 +1,4 @@
+name,smiles,davis_pKd
+cdk2_d0,CNC1CC2OC(C)(C1OC)n1c3ccccc3c3c4c(c5c6ccccc6n2c5c31)C(=O)NC4,8.154901959985743
+cdk2_d1,O=C(c1ccc(C=Cc2n[nH]c3ccccc23)cc1)N1CCNCC1,5.0
+cdk2_d2,Cc1ccc(-n2nc(C(C)(C)C)cc2NC(=O)Nc2ccc(OCCN3CCOCC3)c3ccccc23)cc1,5.0

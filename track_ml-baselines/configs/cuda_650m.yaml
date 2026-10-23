@@ -1,0 +1,18 @@
+# CUDA box: full-size ESM-2 650M, wider fusion, bf16 autocast (train.amp=auto).
+# Combine with --set drug.encoder=chemberta / data.dataset=kiba as needed.
+data:
+  dataset: davis
+  max_protein_len: 1000
+protein:
+  esm_model: facebook/esm2_t33_650M_UR50D
+  tokens_per_batch: 16384
+drug:
+  encoder: graph
+  graph: {d_model: 384, n_layers: 6, n_heads: 8}
+fusion:
+  d_model: 384
+  n_layers: 3
+  n_heads: 8
+train:
+  batch_size: 128
+  num_workers: 4

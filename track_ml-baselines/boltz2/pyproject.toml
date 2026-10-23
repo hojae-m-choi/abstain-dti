@@ -1,0 +1,15 @@
+[project]
+name = "boltz2-runner"
+version = "0.1.0"
+description = "Isolated environment for running Boltz-2 (condition F) next to dti-fusion"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "boltz==2.2.1",
+]
+
+[project.optional-dependencies]
+# Linux + CUDA only: cuEquivariance kernels used by Boltz for faster triangle ops.
+cuda = ["boltz[cuda]==2.2.1"]
+
+[tool.uv]
+package = false

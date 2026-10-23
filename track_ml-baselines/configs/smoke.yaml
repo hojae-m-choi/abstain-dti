@@ -1,0 +1,11 @@
+# 2-minute end-to-end check (tiny subsample, 2 epochs).
+data:
+  dataset: davis
+  subsample: 2000
+  max_protein_len: 256
+protein:
+  esm_model: facebook/esm2_t6_8M_UR50D
+drug:
+  graph: {d_model: 64, n_layers: 2, n_heads: 4}
+fusion: {d_model: 64, n_layers: 1, n_heads: 4}
+train: {epochs: 2, batch_size: 32, out_dir: runs/smoke}

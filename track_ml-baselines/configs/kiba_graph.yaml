@@ -1,0 +1,14 @@
+# KIBA score + Graph Transformer; 118k pairs (~5x DAVIS per epoch). Same M1 preset as davis_graph.yaml.
+data:
+  dataset: kiba
+  split: random
+  max_protein_len: 512
+protein:
+  esm_model: facebook/esm2_t12_35M_UR50D
+drug:
+  encoder: graph
+  graph: {d_model: 128, n_layers: 4, n_heads: 8}
+fusion: {mode: cross, d_model: 128, n_layers: 2, n_heads: 8}
+train:
+  epochs: 40
+  batch_size: 128

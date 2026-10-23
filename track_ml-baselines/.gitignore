@@ -1,0 +1,11 @@
+# anchored to this folder so src/dti_fusion/data/ (source code) is not ignored
+/data/
+/runs/
+/*.log
+.venv/
+__pycache__/
+*.pyc
+boltz2/.venv/
+boltz2/out/
+boltz2/cache/
+boltz2/*.log

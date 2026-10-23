@@ -1,0 +1,20 @@
+# DAVIS (pKd) + frozen ChemBERTa-77M tokens + 1 adapter layer + ESM-2 35M; sized for an M1 laptop (~1.3 min/epoch on M1 Pro, ~3 GB MPS).
+data:
+  dataset: davis
+  split: random
+  max_protein_len: 512  # pooled; 1000 tokens at d_model 256 measured 8.3 GB MPS, 1.2 s/step
+protein:
+  esm_model: facebook/esm2_t12_35M_UR50D
+drug:
+  encoder: chemberta
+  chemberta: {model: DeepChem/ChemBERTa-77M-MLM, finetune: false, adapter_layers: 1}
+fusion:
+  mode: cross
+  d_model: 128
+  n_layers: 2
+  n_heads: 8
+train:
+  epochs: 60
+  batch_size: 64
+  lr: 3.0e-4
+  patience: 10
