@@ -1,0 +1,73 @@
+"""Build the frozen ESM-2 and ChemBERTa caches shared by all three models.
+
+Both phases draw from the same 300 targets, so one protein store covers them; the
+drug store is built over the union of both subsamples. Caches live under a dedicated
+dataset name so they are never confused with a full-BindingDB store.
+
+Run:  uv run python experiments/exp2-comparing_models1/scripts/02_featurize.py
+"""
+
+from __future__ import annotations
+
+import sys
+import time
+from pathlib import Path
+
+import pandas as pd
+
+from dti_fusion.config import ChemBERTaConfig, ProteinConfig
+from dti_fusion.data.featurize import (
+    build_chemberta_store,
+    build_protein_store,
+    chemberta_store_path,
+    protein_store_path,
+)
+from dti_fusion.device import describe, resolve_device
+
+EXP_DIR = Path(__file__).resolve().parents[1]
+DATA_DIR = EXP_DIR.parents[1] / "data"
+CACHE_NAME = "exp2-comparing_models1"
+MAX_SMILES_TOKENS = 256
+
+
+def load_frames() -> pd.DataFrame:
+    paths = sorted((EXP_DIR / "data").glob("sub_*.parquet"))
+    if not paths:
+        raise SystemExit("no sub_*.parquet -- run 01_subsample.py first")
+    return pd.concat([pd.read_parquet(p) for p in paths], ignore_index=True)
+
+
+def main() -> int:
+    print(describe(), "\n")
+    device = resolve_device()
+    df = load_frames()
+
+    sequences = dict(zip(df["target_key"], df["sequence"]))
+    smiles = dict(zip(df["drug_key"], df["smiles"]))
+    print(
+        f"{len(sequences)} targets ({sum(len(s) for s in sequences.values()):,} residues), "
+        f"{len(smiles)} drugs\n"
+    )
+
+    protein_cfg, drug_cfg = ProteinConfig(), ChemBERTaConfig()
+
+    t0 = time.time()
+    build_protein_store(DATA_DIR, CACHE_NAME, sequences, protein_cfg, device)
+    print(
+        f"ESM-2 store ready in {time.time() - t0:.0f}s -> "
+        f"{protein_store_path(DATA_DIR, CACHE_NAME, protein_cfg.esm_model)}"
+    )
+
+    t0 = time.time()
+    build_chemberta_store(
+        DATA_DIR, CACHE_NAME, smiles, drug_cfg, MAX_SMILES_TOKENS, device
+    )
+    print(
+        f"ChemBERTa store ready in {time.time() - t0:.0f}s -> "
+        f"{chemberta_store_path(DATA_DIR, CACHE_NAME, drug_cfg.model, MAX_SMILES_TOKENS)}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

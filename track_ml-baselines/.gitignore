@@ -9,3 +9,12 @@ boltz2/.venv/
 boltz2/out/
 boltz2/cache/
 boltz2/*.log
+
+# experiment outputs: run folders, logs and the big feature caches are regenerable
+experiments/*/runs/
+experiments/*/logs/
+experiments/*/*.log
+experiments/*/runs/*/best.pt
+
+# local machine/host notes: never commit
+.claude/CLAUDE.md

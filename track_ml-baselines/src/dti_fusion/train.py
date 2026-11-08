@@ -105,7 +105,14 @@ def predict(model, loader, device, amp, y_mean, y_std):
     return np.concatenate(ys), np.concatenate(preds)
 
 
-def train(cfg: Config) -> dict:
+def train(cfg: Config, prep: Prepared | None = None, build_model=None) -> dict:
+    """Train, evaluate, and write the run folder.
+
+    ``prep`` and ``build_model`` let an experiment reuse this loop with its own frozen
+    data/splits or a different architecture; both default to the config-driven path.
+    ``build_model(cfg, protein_dim, drug_token_dim)`` must return a module shaped like
+    ``DTIModel`` (``forward(batch)`` and ``parameter_groups``).
+    """
     configure_backends()
     seed_everything(cfg.train.seed)
     device = resolve_device(cfg.train.device)
@@ -115,7 +122,8 @@ def train(cfg: Config) -> dict:
     (out / "config.yaml").write_text(yaml.safe_dump(cfg.to_dict(), sort_keys=False, allow_unicode=True))
     print(f"run {run_name} on {device}")
 
-    prep = prepare(cfg, device)
+    if prep is None:
+        prep = prepare(cfg, device)
     spec = DATASETS[cfg.data.dataset]
     split_info = describe_split(prep.df, prep.split)
     (out / "split.json").write_text(json.dumps(split_info, indent=2))
@@ -125,7 +133,8 @@ def train(cfg: Config) -> dict:
     y_mean, y_std = float(y_train.mean()), float(y_train.std() + 1e-8)
 
     seed_everything(cfg.train.seed)  # model init independent of featurisation randomness
-    model = DTIModel(cfg, prep.protein_dim, prep.drug_token_dim).to(device)
+    factory = build_model or DTIModel
+    model = factory(cfg, prep.protein_dim, prep.drug_token_dim).to(device)
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"trainable parameters: {n_params / 1e6:.2f}M")
 

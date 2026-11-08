@@ -1,0 +1,309 @@
+{
+  "threshold": 6.0,
+  "full": {
+    "pairs": 1569547,
+    "drugs": 980305,
+    "targets": 22965,
+    "pos_rate": 0.6163357962520396,
+    "y": {
+      "count": 1569547.0,
+      "mean": 6.458641004928429,
+      "std": 1.540556860155306,
+      "min": 8.881784197001252e-16,
+      "25%": 5.267606258392334,
+      "50%": 6.46040940284729,
+      "75%": 7.585026741027832,
+      "max": 15.0
+    },
+    "seq_len": {
+      "mean": 635.5587969012715,
+      "median": 481.0,
+      "p90": 1154.0,
+      "max": 7182,
+      "over_1022": 243326
+    },
+    "pairs_per_target": {
+      "median": 2.0,
+      "max": 10162
+    },
+    "pairs_per_drug": {
+      "median": 1.0,
+      "max": 252
+    },
+    "total_residues": 9135912
+  },
+  "full_splits": {
+    "cold_drug": {
+      "parts": {
+        "train": {
+          "pairs": 1256434,
+          "drugs": 784244,
+          "targets": 20561
+        },
+        "val": {
+          "pairs": 156330,
+          "drugs": 98030,
+          "targets": 7501
+        },
+        "test": {
+          "pairs": 156783,
+          "drugs": 98031,
+          "targets": 7799
+        }
+      },
+      "kept_pairs": 1569547,
+      "dropped_pairs": 0,
+      "test_pos_rate": 0.616099959817072
+    },
+    "cold_target": {
+      "parts": {
+        "train": {
+          "pairs": 1265360,
+          "drugs": 836971,
+          "targets": 18372
+        },
+        "val": {
+          "pairs": 145782,
+          "drugs": 131323,
+          "targets": 2296
+        },
+        "test": {
+          "pairs": 158405,
+          "drugs": 145952,
+          "targets": 2297
+        }
+      },
+      "kept_pairs": 1569547,
+      "dropped_pairs": 0,
+      "test_pos_rate": 0.5847605820523342
+    },
+    "cold_both": {
+      "parts": {
+        "train": {
+          "pairs": 1023811,
+          "drugs": 688659,
+          "targets": 16442
+        },
+        "val": {
+          "pairs": 15240,
+          "drugs": 14333,
+          "targets": 742
+        },
+        "test": {
+          "pairs": 13605,
+          "drugs": 12728,
+          "targets": 774
+        }
+      },
+      "kept_pairs": 1052656,
+      "dropped_pairs": 516891,
+      "test_pos_rate": 0.6186696067622198
+    }
+  },
+  "subsamples": {
+    "30000": {
+      "table": {
+        "pairs": 29999,
+        "drugs": 29443,
+        "targets": 3791,
+        "pos_rate": 0.6171872395746525,
+        "y": {
+          "count": 29999.0,
+          "mean": 6.457699544878426,
+          "std": 1.5369086037866324,
+          "min": 8.881784197001252e-16,
+          "25%": 5.271321773529053,
+          "50%": 6.460923671722412,
+          "75%": 7.568636417388916,
+          "max": 13.886056900024414
+        },
+        "seq_len": {
+          "mean": 628.5082502750091,
+          "median": 480.0,
+          "p90": 1132.0,
+          "max": 7182,
+          "over_1022": 4569
+        },
+        "pairs_per_target": {
+          "median": 2.0,
+          "max": 186
+        },
+        "pairs_per_drug": {
+          "median": 1.0,
+          "max": 6
+        },
+        "total_residues": 2114844
+      },
+      "splits": {
+        "cold_drug": {
+          "parts": {
+            "train": {
+              "pairs": 24003,
+              "drugs": 23554,
+              "targets": 3433
+            },
+            "val": {
+              "pairs": 3001,
+              "drugs": 2944,
+              "targets": 1228
+            },
+            "test": {
+              "pairs": 2995,
+              "drugs": 2945,
+              "targets": 1189
+            }
+          },
+          "kept_pairs": 29999,
+          "dropped_pairs": 0,
+          "test_pos_rate": 0.6173622704507512
+        },
+        "cold_target": {
+          "parts": {
+            "train": {
+              "pairs": 24267,
+              "drugs": 23905,
+              "targets": 3033
+            },
+            "val": {
+              "pairs": 2871,
+              "drugs": 2863,
+              "targets": 379
+            },
+            "test": {
+              "pairs": 2861,
+              "drugs": 2859,
+              "targets": 379
+            }
+          },
+          "kept_pairs": 29999,
+          "dropped_pairs": 0,
+          "test_pos_rate": 0.5819643481300245
+        },
+        "cold_both": {
+          "parts": {
+            "train": {
+              "pairs": 19506,
+              "drugs": 19190,
+              "targets": 2750
+            },
+            "val": {
+              "pairs": 303,
+              "drugs": 302,
+              "targets": 128
+            },
+            "test": {
+              "pairs": 294,
+              "drugs": 294,
+              "targets": 115
+            }
+          },
+          "kept_pairs": 20103,
+          "dropped_pairs": 9896,
+          "test_pos_rate": 0.5986394557823129
+        }
+      }
+    },
+    "100000": {
+      "table": {
+        "pairs": 99999,
+        "drugs": 94925,
+        "targets": 6431,
+        "pos_rate": 0.6166661666616666,
+        "y": {
+          "count": 99999.0,
+          "mean": 6.457591778368071,
+          "std": 1.5400813405237552,
+          "min": 8.881784197001252e-16,
+          "25%": 5.270025730133057,
+          "50%": 6.46040940284729,
+          "75%": 7.580044269561768,
+          "max": 14.192464828491211
+        },
+        "seq_len": {
+          "mean": 632.0845808458084,
+          "median": 481.0,
+          "p90": 1153.0,
+          "max": 7182,
+          "over_1022": 15280
+        },
+        "pairs_per_target": {
+          "median": 2.0,
+          "max": 662
+        },
+        "pairs_per_drug": {
+          "median": 1.0,
+          "max": 22
+        },
+        "total_residues": 3340441
+      },
+      "splits": {
+        "cold_drug": {
+          "parts": {
+            "train": {
+              "pairs": 79993,
+              "drugs": 75940,
+              "targets": 5834
+            },
+            "val": {
+              "pairs": 9993,
+              "drugs": 9492,
+              "targets": 2315
+            },
+            "test": {
+              "pairs": 10013,
+              "drugs": 9493,
+              "targets": 2251
+            }
+          },
+          "kept_pairs": 99999,
+          "dropped_pairs": 0,
+          "test_pos_rate": 0.615699590532308
+        },
+        "cold_target": {
+          "parts": {
+            "train": {
+              "pairs": 78658,
+              "drugs": 75303,
+              "targets": 5145
+            },
+            "val": {
+              "pairs": 10595,
+              "drugs": 10543,
+              "targets": 643
+            },
+            "test": {
+              "pairs": 10746,
+              "drugs": 10711,
+              "targets": 643
+            }
+          },
+          "kept_pairs": 99999,
+          "dropped_pairs": 0,
+          "test_pos_rate": 0.6468453378001117
+        },
+        "cold_both": {
+          "parts": {
+            "train": {
+              "pairs": 64850,
+              "drugs": 62097,
+              "targets": 4663
+            },
+            "val": {
+              "pairs": 1079,
+              "drugs": 1072,
+              "targets": 224
+            },
+            "test": {
+              "pairs": 887,
+              "drugs": 883,
+              "targets": 240
+            }
+          },
+          "kept_pairs": 66816,
+          "dropped_pairs": 33183,
+          "test_pos_rate": 0.5918827508455468
+        }
+      }
+    }
+  }
+}

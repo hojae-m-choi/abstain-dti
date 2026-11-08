@@ -1,0 +1,31 @@
+# Shared settings for exp2-comparing_models1.
+# The three arms differ only in how the two modalities are combined, so everything
+# here -- encoders, protein length policy, optimiser, schedule, early stopping --
+# is held fixed across them.
+data:
+  dataset: bindingdb_large   # only consulted for the pAffinity >= 6.0 binary threshold
+  max_protein_len: 512       # BindingDB median 481, p90 1154 -> pooling compresses the tail
+  protein_len_policy: pool
+  max_smiles_tokens: 128   # p99 is 118; the store keeps 256, serving caps at 128 (0.78% of molecules pooled)
+protein:
+  esm_model: facebook/esm2_t12_35M_UR50D
+drug:
+  encoder: chemberta
+  chemberta:
+    model: DeepChem/ChemBERTa-77M-MLM
+    finetune: false
+    adapter_layers: 1
+fusion:
+  mode: cross
+  d_model: 128
+  n_layers: 2
+  n_heads: 8
+  dropout: 0.1
+train:
+  epochs: 40
+  batch_size: 64
+  lr: 3.0e-4
+  weight_decay: 0.01
+  patience: 8
+  select_metric: rmse
+  loss: mse

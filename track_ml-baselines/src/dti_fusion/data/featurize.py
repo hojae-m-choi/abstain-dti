@@ -1,20 +1,24 @@
 """Frozen feature extraction with on-disk caching.
 
-A ``TokenStore`` keeps variable-length token embeddings for many entities in one
-float16 matrix plus an offset index, so ESM-2 residue embeddings and ChemBERTa token
-embeddings are computed once per (dataset, model) and memory-mapped afterwards.
+ESM-2 residue embeddings and ChemBERTa token embeddings are computed once per
+(dataset, model) and kept in a ``TokenStore``, which is memory-mapped afterwards.
+The store format itself lives in ``store.py`` and stays torch-free; this module
+holds the extractors that need a model.
 """
 
 from __future__ import annotations
-
-import json
-from pathlib import Path
 
 import numpy as np
 import torch
 from tqdm import tqdm
 
 from ..device import inference_dtype
+from .store import TokenStore, _slug, chemberta_store_path, protein_store_path
+
+__all__ = [
+    "TokenStore", "chemberta_store_path", "protein_store_path",
+    "embed_proteins", "embed_smiles", "build_protein_store", "build_chemberta_store",
+]
 
 
 def _quiet_transformers() -> None:
@@ -23,53 +27,7 @@ def _quiet_transformers() -> None:
     logging.set_verbosity_error()  # hides the "UNEXPECTED lm_head" load report for encoder-only use
 
 
-def _slug(model_name: str) -> str:
-    return model_name.replace("/", "__")
-
-
-class TokenStore:
-    def __init__(self, root: Path):
-        self.root = Path(root)
-        meta = json.loads((self.root / "index.json").read_text())
-        self.index: dict[str, tuple[int, int]] = {k: tuple(v) for k, v in meta["index"].items()}
-        self.dim = meta["dim"]
-        total = meta["total"]
-        self.matrix = np.memmap(self.root / "emb.f16", dtype=np.float16, mode="r", shape=(total, self.dim))
-
-    @staticmethod
-    def exists(root: Path) -> bool:
-        return (Path(root) / "index.json").exists()
-
-    def __contains__(self, key: str) -> bool:
-        return key in self.index
-
-    def get(self, key: str) -> np.ndarray:
-        offset, length = self.index[key]
-        return self.matrix[offset : offset + length]
-
-    @staticmethod
-    def write(root: Path, items: dict[str, np.ndarray], extra: dict | None = None) -> "TokenStore":
-        root = Path(root)
-        root.mkdir(parents=True, exist_ok=True)
-        dim = next(iter(items.values())).shape[1]
-        total = sum(v.shape[0] for v in items.values())
-        matrix = np.memmap(root / "emb.f16", dtype=np.float16, mode="w+", shape=(total, dim))
-        index, offset = {}, 0
-        for key, arr in items.items():
-            matrix[offset : offset + len(arr)] = arr.astype(np.float16)
-            index[key] = (offset, len(arr))
-            offset += len(arr)
-        matrix.flush()
-        meta = {"dim": dim, "total": total, "index": index, **(extra or {})}
-        (root / "index.json").write_text(json.dumps(meta))
-        return TokenStore(root)
-
-
 # --------------------------------------------------------------------------- ESM-2
-
-
-def protein_store_path(data_dir: str | Path, dataset: str, model_name: str) -> Path:
-    return Path(data_dir) / "features" / dataset / f"esm-{_slug(model_name)}"
 
 
 def _window_starts(length: int, window: int, overlap: int) -> list[int]:
@@ -148,10 +106,6 @@ def build_protein_store(data_dir, dataset, sequences: dict[str, str], cfg, devic
 
 
 # --------------------------------------------------------------------------- ChemBERTa
-
-
-def chemberta_store_path(data_dir: str | Path, dataset: str, model_name: str, max_tokens: int) -> Path:
-    return Path(data_dir) / "features" / dataset / f"chemberta-{_slug(model_name)}-T{max_tokens}"
 
 
 @torch.no_grad()

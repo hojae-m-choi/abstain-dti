@@ -12,12 +12,26 @@ from .featurize import TokenStore
 from .graph import smiles_to_graph
 
 
+def cap_tokens(emb: torch.Tensor, max_len: int | None, policy: str) -> torch.Tensor:
+    """Shorten a [L, D] token sequence to at most ``max_len``.
+
+    ``pool`` keeps coverage of the whole sequence by adaptive averaging; ``truncate``
+    keeps the head. Capping matters for memory: the collator pads to the batch maximum,
+    so a single long outlier sets the attention cost for its whole batch.
+    """
+    if policy not in ("pool", "truncate"):
+        raise ValueError("token length policy must be 'pool' or 'truncate'")
+    if max_len is None or emb.shape[0] <= max_len:
+        return emb
+    if policy == "truncate":
+        return emb[:max_len]
+    return F.adaptive_avg_pool1d(emb.T.unsqueeze(0), max_len).squeeze(0).T
+
+
 class ProteinFeatures:
     """Serves ESM-2 residue tokens capped at ``max_len`` (pooled or truncated), cached in RAM."""
 
     def __init__(self, store: TokenStore, max_len: int, policy: str = "pool"):
-        if policy not in ("pool", "truncate"):
-            raise ValueError("protein_len_policy must be 'pool' or 'truncate'")
         self.store, self.max_len, self.policy = store, max_len, policy
         self.dim = store.dim
         self._cache: dict[str, torch.Tensor] = {}
@@ -25,12 +39,7 @@ class ProteinFeatures:
     def __getitem__(self, key: str) -> torch.Tensor:
         if key not in self._cache:
             emb = torch.from_numpy(np.asarray(self.store.get(key), dtype=np.float32))
-            if emb.shape[0] > self.max_len:
-                if self.policy == "truncate":
-                    emb = emb[: self.max_len]
-                else:  # adaptive average pooling keeps coverage of the whole chain
-                    emb = F.adaptive_avg_pool1d(emb.T.unsqueeze(0), self.max_len).squeeze(0).T
-            self._cache[key] = emb.to(torch.float16).contiguous()
+            self._cache[key] = cap_tokens(emb, self.max_len, self.policy).to(torch.float16).contiguous()
         return self._cache[key]
 
 
@@ -43,14 +52,19 @@ class GraphFeatures:
 
 
 class TokenFeatures:
-    """Frozen ChemBERTa token embeddings."""
+    """Frozen ChemBERTa token embeddings, optionally capped at ``max_len``.
 
-    def __init__(self, store: TokenStore):
-        self.store = store
+    Unlike ``ProteinFeatures`` this does not cache: a dataset can hold hundreds of
+    thousands of distinct molecules, so the store is left memory-mapped.
+    """
+
+    def __init__(self, store: TokenStore, max_len: int | None = None, policy: str = "pool"):
+        self.store, self.max_len, self.policy = store, max_len, policy
         self.dim = store.dim
 
     def __getitem__(self, key: str) -> torch.Tensor:
-        return torch.from_numpy(np.asarray(self.store.get(key), dtype=np.float32))
+        emb = torch.from_numpy(np.asarray(self.store.get(key), dtype=np.float32))
+        return cap_tokens(emb, self.max_len, self.policy)
 
 
 class SmilesText:

@@ -23,6 +23,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# AutoML baseline for experiments/exp2-comparing_models1; not needed to train or serve the models.
+automl = ["flaml[automl]>=2.3"]
+# optional experiment tracking; runs write metrics to disk either way (07_to_wandb.py backfills)
+track = ["wandb>=0.18"]
 
 [project.scripts]
 dti = "dti_fusion.cli:main"

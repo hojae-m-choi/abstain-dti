@@ -2,3 +2,6 @@
 .scratch/abstain-dti-design/feedback.md
 .env
 .env.secret
+
+# local working notes (plans, host/machine notes): never commit
+.claude/
