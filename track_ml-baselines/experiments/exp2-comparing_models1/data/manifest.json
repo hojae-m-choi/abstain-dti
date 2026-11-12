@@ -1,8 +1,9 @@
 {
   "source": "bindingdb_large",
-  "top_targets": 300,
   "threshold": 6.0,
-  "phase1": {
+  "t300n30000": {
+    "top_targets": 300,
+    "requested_pairs": 30000,
     "pairs": 30001,
     "drugs": 29445,
     "targets": 300,
@@ -170,7 +171,9 @@
       }
     }
   },
-  "phase2": {
+  "t300n100000": {
+    "top_targets": 300,
+    "requested_pairs": 100000,
     "pairs": 99998,
     "drugs": 94600,
     "targets": 300,

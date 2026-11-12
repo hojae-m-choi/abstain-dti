@@ -1,7 +1,7 @@
-# exp2-comparing_models1 — 48 runs
+# exp2-comparing_models1 — 51 runs
 
 
-## n = 100000
+## t300n100000 — 300 targets, 100,000 pairs
 
 | split | arm | seeds | RMSE | MAE | PEARSON | SPEARMAN | CI | AUROC | AUPRC |
 |---|---|---|---|---|---|---|---|---|---|
@@ -21,3 +21,11 @@
 | cold_both | flaml-chemberta | 3 | 1.372 ± 0.033 | 1.105 ± 0.030 | 0.372 ± 0.047 | 0.367 ± 0.042 | 0.626 ± 0.016 | 0.686 ± 0.022 | 0.801 ± 0.016 |
 | cold_both | siamese | 3 | 1.390 ± 0.046 | 1.103 ± 0.041 | 0.376 ± 0.018 | 0.363 ± 0.026 | 0.625 ± 0.010 | 0.683 ± 0.016 | 0.796 ± 0.010 |
 | cold_both | fusion | 3 | 1.414 ± 0.045 | 1.129 ± 0.023 | 0.348 ± 0.034 | 0.330 ± 0.017 | 0.613 ± 0.007 | 0.671 ± 0.020 | 0.780 ± 0.002 |
+
+## t300n30000 — 300 targets, 30,000 pairs
+
+| split | arm | seeds | RMSE | MAE | PEARSON | SPEARMAN | CI | AUROC | AUPRC |
+|---|---|---|---|---|---|---|---|---|---|
+| cold_target | flaml-ecfp | 1 | 1.396 | 1.131 | 0.343 | 0.318 | 0.608 | 0.696 | 0.851 |
+| cold_target | siamese | 1 | 1.266 | 1.038 | 0.462 | 0.426 | 0.647 | 0.746 | 0.885 |
+| cold_target | fusion | 1 | 1.250 | 1.019 | 0.485 | 0.445 | 0.654 | 0.748 | 0.885 |
