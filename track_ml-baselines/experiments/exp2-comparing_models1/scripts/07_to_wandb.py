@@ -22,17 +22,10 @@ import pandas as pd
 import yaml
 
 EXP_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(EXP_DIR / "src"))
+from naming import parse_run_name  # noqa: E402
+
 SPLIT_ORDER = ["cold_drug", "scaffold", "cold_target", "cold_both"]
-
-
-def parse_name(name: str) -> dict:
-    """n<N>_<split>_<arm>_s<seed>; split names themselves contain underscores."""
-    n, rest = name[1:].split("_", 1)
-    arm, seed = rest.rsplit("_s", 1)
-    split = next((s for s in SPLIT_ORDER if arm.startswith(s + "_")), None)
-    if split:
-        arm = arm[len(split) + 1 :]
-    return {"n": int(n), "split": split, "arm": arm, "seed": int(seed)}
 
 
 def main() -> int:
@@ -63,7 +56,7 @@ def main() -> int:
             print(f"skip {name} (already in W&B)")
             continue
 
-        meta = parse_name(name)
+        meta = parse_run_name(name, SPLIT_ORDER)
         cfg_path = run_dir / "config.yaml"
         config = yaml.safe_load(cfg_path.read_text()) if cfg_path.exists() else {}
         results = json.loads(metrics_path.read_text())
@@ -74,7 +67,7 @@ def main() -> int:
             name=name,
             reinit=True,
             config={**config, **meta, "best_estimator": results.get("best_estimator")},
-            tags=[meta["arm"], meta["split"] or "unknown", f"n{meta['n']}"],
+            tags=[meta["arm"], meta["split"] or "unknown", meta["tag"]],
         )
         history = run_dir / "history.csv"
         if history.exists():  # FLAML has no epochs

@@ -12,6 +12,9 @@ from pathlib import Path
 import pandas as pd
 
 EXP_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(EXP_DIR / "src"))
+from naming import parse_run_name  # noqa: E402
+
 METRICS = ("rmse", "mae", "pearson", "spearman", "ci", "auroc", "auprc")
 ARM_ORDER = ["flaml-ecfp", "flaml-chemberta", "siamese", "fusion"]
 SPLIT_ORDER = ["cold_drug", "scaffold", "cold_target", "cold_both"]
@@ -21,22 +24,9 @@ def rows() -> pd.DataFrame:
     out = []
     for path in sorted((EXP_DIR / "runs").glob("*/metrics.json")):
         m = json.loads(path.read_text())
-        # run names are n<N>_<split>_<arm>_s<seed>; split names contain underscores
-        name = path.parent.name
-        n, rest = name[1:].split("_", 1)
-        arm, seed = rest.rsplit("_s", 1)
-        for split in SPLIT_ORDER:
-            if arm.startswith(split + "_"):
-                arm = arm[len(split) + 1 :]
-                break
-        else:
-            split = None
         out.append(
             {
-                "n": int(n),
-                "split": split,
-                "arm": arm,
-                "seed": int(seed),
+                **parse_run_name(path.parent.name, SPLIT_ORDER),
                 "best_epoch": m.get("best_epoch"),
                 "params": m.get("params"),
                 "best_estimator": m.get("best_estimator"),
@@ -58,16 +48,17 @@ def main() -> int:
         return 0
     df["split"] = ordered(df, "split", SPLIT_ORDER)
     df["arm"] = ordered(df, "arm", ARM_ORDER)
-    df = df.sort_values(["n", "split", "arm", "seed"])
+    df = df.sort_values(["top_targets", "n", "split", "arm", "seed"])
     df.to_csv(EXP_DIR / "runs" / "all_runs.csv", index=False)
 
-    grouped = df.groupby(["n", "split", "arm"], observed=True)[list(METRICS)]
+    grouped = df.groupby(["tag", "split", "arm"], observed=True)[list(METRICS)]
     summary = grouped.agg(["mean", "std", "count"])
     summary.to_csv(EXP_DIR / "runs" / "summary.csv")
 
     lines = [f"# exp2-comparing_models1 — {len(df)} runs\n"]
-    for n, block in df.groupby("n"):
-        lines.append(f"\n## n = {n}\n")
+    for size_tag, block in df.groupby("tag", sort=False):  # df is already in size order
+        top_targets, n = block["top_targets"].iloc[0], block["n"].iloc[0]
+        lines.append(f"\n## {size_tag} — {top_targets} targets, {n:,} pairs\n")
         lines.append(
             "| split | arm | seeds | " + " | ".join(m.upper() for m in METRICS) + " |"
         )

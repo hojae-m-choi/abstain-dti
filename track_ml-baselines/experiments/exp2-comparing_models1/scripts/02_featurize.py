@@ -1,8 +1,9 @@
 """Build the frozen ESM-2 and ChemBERTa caches shared by all three models.
 
-Both phases draw from the same 300 targets, so one protein store covers them; the
-drug store is built over the union of both subsamples. Caches live under a dedicated
-dataset name so they are never confused with a full-BindingDB store.
+One store per model covers every size tag: a TokenStore is a key -> embedding map, so
+the caches are built over the union of all sub_*.parquet and a larger --top-targets
+simply rebuilds them as a superset that the smaller tags keep reading. Caches live
+under a dedicated dataset name so they are never confused with a full-BindingDB store.
 
 Run:  uv run python experiments/exp2-comparing_models1/scripts/02_featurize.py
 """

@@ -4,7 +4,7 @@ Both arms read the identical rows, the identical ESM-2 / ChemBERTa caches and th
 identical training loop (`dti_fusion.train.train`); only the model class differs.
 
 Run:  uv run python experiments/exp2-comparing_models1/scripts/03_run_neural.py \
-          --model siamese --split cold_target --n 30000 --seed 0
+          --model siamese --split cold_target --tag t300n30000 --seed 0
 """
 
 from __future__ import annotations
@@ -36,6 +36,7 @@ from dti_fusion.train import Prepared, train
 
 EXP_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXP_DIR / "src"))
+from naming import run_name, split_path, subsample_path  # noqa: E402
 from siamese import SiameseModel  # noqa: E402
 
 DATA_DIR = EXP_DIR.parents[1] / "data"
@@ -43,15 +44,14 @@ CACHE_NAME = "exp2-comparing_models1"
 MAX_SMILES_TOKENS = 256
 
 
-def load_split(n: int, kind: str, seed: int) -> dict[str, np.ndarray]:
-    path = EXP_DIR / "data" / "splits" / f"{n}_{kind}_s{seed}.json"
-    meta = json.loads(path.read_text())
+def load_split(size_tag: str, kind: str, seed: int) -> dict[str, np.ndarray]:
+    meta = json.loads(split_path(EXP_DIR, size_tag, kind, seed).read_text())
     return {k: np.asarray(v, dtype=np.int64) for k, v in meta["indices"].items()}
 
 
-def build_prepared(cfg, device, n: int, kind: str, seed: int) -> Prepared:
-    df = pd.read_parquet(EXP_DIR / "data" / f"sub_{n}.parquet")
-    split = load_split(n, kind, seed)
+def build_prepared(cfg, device, size_tag: str, kind: str, seed: int) -> Prepared:
+    df = pd.read_parquet(subsample_path(EXP_DIR, size_tag))
+    split = load_split(size_tag, kind, seed)
 
     protein_store = TokenStore(
         protein_store_path(DATA_DIR, CACHE_NAME, cfg.protein.esm_model)
@@ -89,7 +89,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=("fusion", "siamese"), required=True)
     ap.add_argument("--split", required=True)
-    ap.add_argument("--n", type=int, default=30_000)
+    ap.add_argument(
+        "--tag",
+        required=True,
+        help="size tag written by 01_subsample.py, e.g. t300n30000",
+    )
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--set", "-s", action="append", default=[], metavar="KEY=VALUE")
     args = ap.parse_args()
@@ -105,10 +109,10 @@ def main() -> int:
     ]
     cfg = load_config(EXP_DIR / "config.yaml", overrides)
     cfg.train.out_dir = str(EXP_DIR / "runs")
-    cfg.train.run_name = f"n{args.n}_{args.split}_{args.model}_s{args.seed}"
+    cfg.train.run_name = run_name(args.tag, args.split, args.model, args.seed)
 
     device = resolve_device(cfg.train.device)
-    prep = build_prepared(cfg, device, args.n, args.split, args.seed)
+    prep = build_prepared(cfg, device, args.tag, args.split, args.seed)
     factory = SiameseModel if args.model == "siamese" else None
     train(cfg, prep=prep, build_model=factory)
     return 0

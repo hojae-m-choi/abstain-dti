@@ -13,7 +13,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."           # experiments/exp2-comparing_models1
 EXP_ROOT=$(pwd)
-N=100000
+TAG=${TAG:-t300n100000}
 SPLITS="cold_drug scaffold cold_target cold_both"
 SEEDS="0 1 2"
 TOTAL_RUNS=48
@@ -36,7 +36,7 @@ status)
   nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader
   echo "=== load (cores: $(nproc)) ==="; uptime
   echo "=== finished: $(ls runs/*/metrics.json 2>/dev/null | wc -l) / $TOTAL_RUNS ==="
-  for f in logs/n${N}_*.log; do
+  for f in logs/${TAG}_*.log; do
     [ -f "$f" ] || continue
     printf '  %-45s %s\n' "$(basename "$f" .log)" "$(grep -cE '^epoch' "$f" || true) epochs"
   done
@@ -62,7 +62,7 @@ fi
 start() {  # name arm env...
   local name=$1 arm=$2
   shift 2
-  env "$@" nohup "$EXP_ROOT/scripts/run_phase.sh" "$N" "$SPLITS" "$arm" "$SEEDS" \
+  env "$@" nohup "$EXP_ROOT/scripts/run_phase.sh" "$TAG" "$SPLITS" "$arm" "$SEEDS" \
     > "$EXP_ROOT/logs/phase2_$name.log" 2>&1 &
   echo "$! $name ($arm)" >> "$PIDFILE"
   echo "$name -> pid $! ($arm)"

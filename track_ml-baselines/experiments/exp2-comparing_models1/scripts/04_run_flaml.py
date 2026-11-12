@@ -7,7 +7,7 @@ model selection, which is the one thing these splits exist to prevent.
 Writes the same run folder shape as the neural arms so 06_summarize.py reads them alike.
 
 Run:  uv run --extra automl python experiments/exp2-comparing_models1/scripts/04_run_flaml.py \
-          --drug-feature ecfp --split cold_target --n 30000 --seed 0
+          --drug-feature ecfp --split cold_target --tag t300n30000 --seed 0
 """
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ from dti_fusion.metrics import regression_metrics
 EXP_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXP_DIR / "src"))
 from features import build_pair_matrix  # noqa: E402
+from naming import run_name, split_path, subsample_path  # noqa: E402
 
 DATA_DIR = EXP_DIR.parents[1] / "data"
 CACHE_NAME = "exp2-comparing_models1"
@@ -43,7 +44,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--drug-feature", choices=("ecfp", "chemberta"), default="ecfp")
     ap.add_argument("--split", required=True)
-    ap.add_argument("--n", type=int, default=30_000)
+    ap.add_argument(
+        "--tag",
+        required=True,
+        help="size tag written by 01_subsample.py, e.g. t300n30000",
+    )
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--time-budget", type=int, default=3600)
     ap.add_argument(
@@ -56,13 +61,11 @@ def main() -> int:
 
     from flaml import AutoML
 
-    df = pd.read_parquet(EXP_DIR / "data" / f"sub_{args.n}.parquet")
+    df = pd.read_parquet(subsample_path(EXP_DIR, args.tag))
     split = {
         k: np.asarray(v, dtype=np.int64)
         for k, v in json.loads(
-            (
-                EXP_DIR / "data" / "splits" / f"{args.n}_{args.split}_s{args.seed}.json"
-            ).read_text()
+            split_path(EXP_DIR, args.tag, args.split, args.seed).read_text()
         )["indices"].items()
     }
 
@@ -75,10 +78,10 @@ def main() -> int:
         else None
     )
 
-    run_name = f"n{args.n}_{args.split}_flaml-{args.drug_feature}_s{args.seed}"
-    out = EXP_DIR / "runs" / run_name
+    name = run_name(args.tag, args.split, f"flaml-{args.drug_feature}", args.seed)
+    out = EXP_DIR / "runs" / name
     out.mkdir(parents=True, exist_ok=True)
-    print(f"run {run_name}")
+    print(f"run {name}")
 
     t0 = time.time()
     parts = {}
@@ -106,7 +109,7 @@ def main() -> int:
     print(f"best estimator: {automl.best_estimator}  val rmse {automl.best_loss:.4f}")
 
     results = {
-        "run": run_name,
+        "run": name,
         "device": "cpu",
         "split": args.split,
         "seed": args.seed,

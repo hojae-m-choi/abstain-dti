@@ -104,14 +104,38 @@ cd track_ml-baselines
 uv run python experiments/exp2-comparing_models1/scripts/01_subsample.py   # 고정 subsample + split
 uv run python experiments/exp2-comparing_models1/scripts/02_featurize.py   # ESM-2 / ChemBERTa 캐시
 
-# 개별 run
+# 개별 run (--tag 는 01이 찍은 크기 태그)
 uv run python experiments/exp2-comparing_models1/scripts/03_run_neural.py \
-    --model siamese --split cold_target --n 100000 --seed 0
+    --model siamese --split cold_target --tag t300n100000 --seed 0
 uv run --extra automl python -u experiments/exp2-comparing_models1/scripts/04_run_flaml.py \
-    --drug-feature ecfp --split cold_target --n 100000 --seed 0
+    --drug-feature ecfp --split cold_target --tag t300n100000 --seed 0
 
 uv run python experiments/exp2-comparing_models1/scripts/06_summarize.py   # 결과 표
 ```
+
+### 데이터 크기 바꾸기
+
+크기를 정하는 축은 둘이고, 둘 다 `01_subsample.py`의 인자입니다.
+
+| 인자 | 뜻 | 바꾸면 |
+|---|---|---|
+| `--top-targets` | 쌍 수 상위 몇 개 단백질을 남길지 (기본 300) | cold_target / cold_both의 test 단백질 수가 따라 움직입니다. 300이면 30개뿐이라 seed 분산이 큽니다. 600 → 60개, 1000 → 100개. |
+| `--sizes` | 그 안에서 뽑을 쌍 수 (`30000`, `phase1` 같은 별칭도 가능) | 학습 시간에 거의 선형. `--top-targets 300`의 상한은 880,897쌍입니다. |
+
+```bash
+# 단백질을 두 배로, 쌍 수는 그대로
+uv run python .../01_subsample.py --top-targets 600 --sizes 100000
+TAG=t600n100000 .../launch_phase2.sh
+```
+
+두 값은 모두 **크기 태그** `t<targets>n<pairs>`에 들어가고, 이 태그가
+`data/sub_<tag>.parquet`, `data/splits/<tag>_*.json`, `runs/<tag>_*`의 이름이 됩니다.
+그래서 설정이 다른 grid끼리 서로 덮어쓰거나 `06_summarize.py`에서 한 줄로 평균되는 일이 없습니다.
+
+특징 캐시는 태그 밖에 있습니다. `TokenStore`는 key → 임베딩 맵이라
+`--top-targets`를 키우면 상위집합으로 한 번 다시 만들어지고, 작은 태그들은 같은 행을 계속 읽습니다.
+(상한 참고: 150 → 631,290쌍 / 98,227잔기, 300 → 880,897 / 198,738, 600 → 1,138,334 / 377,692,
+1000 → 1,297,801 / 627,588, 전체 22,965 단백질 → 1,569,547 / 9,135,912. ESM-2 캐시는 전체라도 25분.)
 
 2-GPU 머신에서 전체 grid를 한 번에 돌리려면 `scripts/launch_phase2.sh` (상태는 `launch_phase2.sh status`,
 중지는 `stop`). 이미 `metrics.json`이 있는 run은 건너뛰므로 중단 후 재개해도 안전합니다.
@@ -125,9 +149,9 @@ scripts/02_featurize.py ESM-2 / ChemBERTa 캐시
 scripts/03_run_neural.py  fusion | siamese
 scripts/04_run_flaml.py   flaml-ecfp | flaml-chemberta
 scripts/06_summarize.py   all_runs.csv, summary.csv, summary.md
-data/sub_*.parquet      고정된 subsample (이 파일이 비교의 기준)
+data/sub_<tag>.parquet  고정된 subsample (이 파일이 비교의 기준)
 data/splits/            split 인덱스 (고정)
-src/                    features.py (ECFP4, pooling), siamese.py
+src/                    naming.py (크기 태그), features.py (ECFP4, pooling), siamese.py
 runs/                   run별 metrics.json, predictions_*.csv
 ```
 
