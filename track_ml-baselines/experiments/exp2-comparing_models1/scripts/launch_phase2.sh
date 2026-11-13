@@ -16,7 +16,8 @@ EXP_ROOT=$(pwd)
 TAG=${TAG:-t300n100000}
 SPLITS="cold_drug scaffold cold_target cold_both"
 SEEDS="0 1 2"
-TOTAL_RUNS=48
+# splits x seeds x arms of the default grid; override when launching a reduced one
+TOTAL_RUNS=${TOTAL_RUNS:-48}
 PIDFILE=logs/phase2.pids
 mkdir -p logs runs
 

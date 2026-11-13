@@ -11,7 +11,7 @@ set -euo pipefail
 
 TAG=${1:-t300n30000}
 SPLITS=${2:-"cold_drug scaffold cold_target"}
-ARMS=${3:-"siamese fusion flaml"}
+ARMS=${3:-"siamese fusion flaml"}   # also: siamese-ecfp
 SEEDS=${4:-"0"}
 FLAML_BUDGET=${FLAML_BUDGET:-1800}
 # --no-sync runs against the environment as it stands, rather than re-resolving the lock;
@@ -26,7 +26,7 @@ for seed in $SEEDS; do
   for split in $SPLITS; do
     for arm in $ARMS; do
       case "$arm" in
-        siamese|fusion) names="$arm" ;;
+        siamese|fusion|siamese-ecfp) names="$arm" ;;
         flaml)          names="flaml-ecfp flaml-chemberta" ;;
         *) echo "unknown arm '$arm'" >&2; exit 1 ;;
       esac

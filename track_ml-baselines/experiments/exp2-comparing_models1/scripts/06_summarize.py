@@ -16,7 +16,7 @@ sys.path.insert(0, str(EXP_DIR / "src"))
 from naming import parse_run_name  # noqa: E402
 
 METRICS = ("rmse", "mae", "pearson", "spearman", "ci", "auroc", "auprc")
-ARM_ORDER = ["flaml-ecfp", "flaml-chemberta", "siamese", "fusion"]
+ARM_ORDER = ["flaml-ecfp", "flaml-chemberta", "siamese-ecfp", "siamese", "fusion"]
 SPLIT_ORDER = ["cold_drug", "scaffold", "cold_target", "cold_both"]
 
 

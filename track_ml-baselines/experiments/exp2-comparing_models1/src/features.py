@@ -1,7 +1,11 @@
-"""Fixed-length pair features for the FLAML arm.
+"""Fixed-length pair features.
 
-Two drug representations, so that "AutoML is weaker" can be told apart from
-"ECFP4 is weaker than ChemBERTa":
+``build_pair_matrix`` serves the FLAML arm; ``EcfpFeatures`` serves the neural arm,
+so the 2x2 of (ECFP4, ChemBERTa) x (GBDT, neural net) can be completed and the
+drug-representation effect told apart from the model-family effect.
+
+FLAML gets two drug representations, so that "AutoML is weaker" can be told apart
+from "ECFP4 is weaker than ChemBERTa":
 
     ecfp      ECFP4 2048 bits          + ESM-2 mean  (2528 dims)
     chemberta ChemBERTa token mean 384 + ESM-2 mean  ( 864 dims)
@@ -14,6 +18,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import torch
 from rdkit import Chem, RDLogger
 from rdkit.Chem import rdFingerprintGenerator
 
@@ -83,3 +88,28 @@ def build_pair_matrix(
         ]
     )
     return x, df["y"].to_numpy(dtype=np.float32)
+
+
+class EcfpFeatures:
+    """ECFP4 bits served as a one-token drug sequence.
+
+    The neural pipeline moves drugs as [L, D] token tensors, so a fingerprint enters as
+    L = 1: the collator pads to 1, and ``masked_mean`` then returns the fingerprint
+    itself. Nothing in the dataset, collator or model needs a special case.
+
+    Only meaningful for the siamese arm -- with a length-1 drug sequence the fusion
+    transformer's token-level co-attention has nothing to attend over.
+
+    Bits are kept packed: 2048 float32 per drug is ~780 MB at 95k drugs, while the
+    packed form is ~24 MB, which matters because every DataLoader worker forks a copy.
+    """
+
+    def __init__(self, smiles_by_key: dict[str, str]):
+        keys, mat = ecfp_matrix(smiles_by_key)
+        self.dim = mat.shape[1]
+        self._pos = {k: i for i, k in enumerate(keys)}
+        self._bits = np.packbits(mat.astype(bool), axis=1)
+
+    def __getitem__(self, key: str) -> torch.Tensor:
+        row = np.unpackbits(self._bits[self._pos[key]])[: self.dim]
+        return torch.from_numpy(row.astype(np.float32)).unsqueeze(0)

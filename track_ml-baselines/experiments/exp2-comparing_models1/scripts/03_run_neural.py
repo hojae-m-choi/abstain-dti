@@ -1,7 +1,10 @@
 """Train the fusion transformer or the siamese model on a frozen subsample + split.
 
-Both arms read the identical rows, the identical ESM-2 / ChemBERTa caches and the
-identical training loop (`dti_fusion.train.train`); only the model class differs.
+All arms read the identical rows, the identical ESM-2 cache and the identical training
+loop (`dti_fusion.train.train`). ``fusion`` and ``siamese`` differ only in the model
+class; ``siamese-ecfp`` is the siamese model with its drug side swapped from frozen
+ChemBERTa to ECFP4 bits, which completes the (ECFP4, ChemBERTa) x (GBDT, neural net)
+square the FLAML arm opened.
 
 Run:  uv run python experiments/exp2-comparing_models1/scripts/03_run_neural.py \
           --model siamese --split cold_target --tag t300n30000 --seed 0
@@ -36,6 +39,7 @@ from dti_fusion.train import Prepared, train
 
 EXP_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXP_DIR / "src"))
+from features import EcfpFeatures  # noqa: E402
 from naming import run_name, split_path, subsample_path  # noqa: E402
 from siamese import SiameseModel  # noqa: E402
 
@@ -49,26 +53,35 @@ def load_split(size_tag: str, kind: str, seed: int) -> dict[str, np.ndarray]:
     return {k: np.asarray(v, dtype=np.int64) for k, v in meta["indices"].items()}
 
 
-def build_prepared(cfg, device, size_tag: str, kind: str, seed: int) -> Prepared:
+def build_drugs(cfg, df: pd.DataFrame, drug_feature: str):
+    """Drug side of the batch, as [L, D] tokens either way (ECFP4 arrives as L = 1)."""
+    if drug_feature == "ecfp":
+        return EcfpFeatures(dict(zip(df["drug_key"], df["smiles"])))
+    drug_store = TokenStore(
+        chemberta_store_path(
+            DATA_DIR, CACHE_NAME, cfg.drug.chemberta.model, MAX_SMILES_TOKENS
+        )
+    )
+    # the store holds up to MAX_SMILES_TOKENS; serve a tighter cap so one 256-token
+    # outlier cannot set the padded length -- and therefore the attention cost -- of its batch
+    return TokenFeatures(
+        drug_store, cfg.data.max_smiles_tokens, cfg.data.protein_len_policy
+    )
+
+
+def build_prepared(
+    cfg, device, size_tag: str, kind: str, seed: int, drug_feature: str
+) -> Prepared:
     df = pd.read_parquet(subsample_path(EXP_DIR, size_tag))
     split = load_split(size_tag, kind, seed)
 
     protein_store = TokenStore(
         protein_store_path(DATA_DIR, CACHE_NAME, cfg.protein.esm_model)
     )
-    drug_store = TokenStore(
-        chemberta_store_path(
-            DATA_DIR, CACHE_NAME, cfg.drug.chemberta.model, MAX_SMILES_TOKENS
-        )
-    )
     proteins = ProteinFeatures(
         protein_store, cfg.data.max_protein_len, cfg.data.protein_len_policy
     )
-    # the store holds up to MAX_SMILES_TOKENS; serve a tighter cap so one 256-token
-    # outlier cannot set the padded length -- and therefore the attention cost -- of its batch
-    drugs = TokenFeatures(
-        drug_store, cfg.data.max_smiles_tokens, cfg.data.protein_len_policy
-    )
+    drugs = build_drugs(cfg, df, drug_feature)
     collate = Collator("tokens")
 
     loaders = {
@@ -82,12 +95,14 @@ def build_prepared(cfg, device, size_tag: str, kind: str, seed: int) -> Prepared
         )
         for name, idx in split.items()
     }
-    return Prepared(df, split, loaders, protein_store.dim, drug_store.dim)
+    return Prepared(df, split, loaders, protein_store.dim, drugs.dim)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", choices=("fusion", "siamese"), required=True)
+    ap.add_argument(
+        "--model", choices=("fusion", "siamese", "siamese-ecfp"), required=True
+    )
     ap.add_argument("--split", required=True)
     ap.add_argument(
         "--tag",
@@ -98,11 +113,12 @@ def main() -> int:
     ap.add_argument("--set", "-s", action="append", default=[], metavar="KEY=VALUE")
     args = ap.parse_args()
 
+    drug_feature = "ecfp" if args.model.endswith("-ecfp") else "chemberta"
     overrides = [
         "data.dataset=bindingdb_large",  # only used for the pAffinity>=6.0 threshold
         f"data.split={args.split}",
         f"train.seed={args.seed}",
-        "drug.encoder=chemberta",
+        "drug.encoder=chemberta",  # names the cache; "ecfp" bypasses it entirely
         "drug.chemberta.finetune=false",
         f"train.num_workers={os.environ.get('DTI_NUM_WORKERS', 0)}",
         *args.set,
@@ -112,8 +128,8 @@ def main() -> int:
     cfg.train.run_name = run_name(args.tag, args.split, args.model, args.seed)
 
     device = resolve_device(cfg.train.device)
-    prep = build_prepared(cfg, device, args.tag, args.split, args.seed)
-    factory = SiameseModel if args.model == "siamese" else None
+    prep = build_prepared(cfg, device, args.tag, args.split, args.seed, drug_feature)
+    factory = SiameseModel if args.model.startswith("siamese") else None
     train(cfg, prep=prep, build_model=factory)
     return 0
 
