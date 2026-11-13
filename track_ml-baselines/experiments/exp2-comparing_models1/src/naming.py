@@ -19,6 +19,23 @@ from pathlib import Path
 
 TAG_RE = re.compile(r"^t(\d+)n(\d+)$")
 
+# Protein encoder sizes, by the short name that goes into an arm name. The default
+# carries no suffix, so every run recorded before this knob existed keeps its name.
+ESM_MODELS = {
+    "35M": "facebook/esm2_t12_35M_UR50D",
+    "150M": "facebook/esm2_t30_150M_UR50D",
+}
+ESM_DEFAULT = "35M"
+
+
+def arm_name(model: str, esm: str = ESM_DEFAULT) -> str:
+    """fusion + 150M -> 'fusion-esm150'; the default size stays unsuffixed."""
+    if esm not in ESM_MODELS:
+        raise ValueError(
+            f"unknown esm size {esm!r}; expected one of {list(ESM_MODELS)}"
+        )
+    return model if esm == ESM_DEFAULT else f"{model}-esm{esm.rstrip('M')}"
+
 
 def tag(top_targets: int, n: int) -> str:
     return f"t{top_targets}n{n}"

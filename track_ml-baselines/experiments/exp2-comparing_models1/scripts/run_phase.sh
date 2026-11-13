@@ -11,7 +11,7 @@ set -euo pipefail
 
 TAG=${1:-t300n30000}
 SPLITS=${2:-"cold_drug scaffold cold_target"}
-ARMS=${3:-"siamese fusion flaml"}   # also: siamese-ecfp
+ARMS=${3:-"siamese fusion flaml"}   # also: siamese-ecfp, <arm>-esm150
 SEEDS=${4:-"0"}
 FLAML_BUDGET=${FLAML_BUDGET:-1800}
 # --no-sync runs against the environment as it stands, rather than re-resolving the lock;
@@ -27,6 +27,8 @@ for seed in $SEEDS; do
     for arm in $ARMS; do
       case "$arm" in
         siamese|fusion|siamese-ecfp) names="$arm" ;;
+        # protein-encoder swap: same model, bigger ESM-2, its own arm name
+        siamese-esm150|fusion-esm150|siamese-ecfp-esm150) names="$arm" ;;
         flaml)          names="flaml-ecfp flaml-chemberta" ;;
         *) echo "unknown arm '$arm'" >&2; exit 1 ;;
       esac
@@ -43,8 +45,11 @@ for seed in $SEEDS; do
             --drug-feature "${name#flaml-}" --split "$split" --tag "$TAG" --seed "$seed" \
             --time-budget "$FLAML_BUDGET" 2>&1 | tee "$EXP/logs/$run.log" | { grep -vE "^\[flaml" || true; }
         else
+          # an -esm150 suffix is an encoder choice, not a model class
+          esm=35M; model="$name"
+          case "$name" in *-esm150) esm=150M; model="${name%-esm150}" ;; esac
           $UV python -u "$EXP/scripts/03_run_neural.py" \
-            --model "$arm" --split "$split" --tag "$TAG" --seed "$seed" \
+            --model "$model" --esm "$esm" --split "$split" --tag "$TAG" --seed "$seed" \
             2>&1 | tee "$EXP/logs/$run.log" | { grep -E "^run|^split|parameters|^epoch|early stop" || true; }
         fi
       done

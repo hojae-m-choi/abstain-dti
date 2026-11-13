@@ -4,7 +4,9 @@ All arms read the identical rows, the identical ESM-2 cache and the identical tr
 loop (`dti_fusion.train.train`). ``fusion`` and ``siamese`` differ only in the model
 class; ``siamese-ecfp`` is the siamese model with its drug side swapped from frozen
 ChemBERTa to ECFP4 bits, which completes the (ECFP4, ChemBERTa) x (GBDT, neural net)
-square the FLAML arm opened.
+square the FLAML arm opened. ``--esm`` swaps the protein encoder, which is the other
+one-axis change available: it renames the arm rather than the tag, because the drug
+side and the rows are untouched.
 
 Run:  uv run python experiments/exp2-comparing_models1/scripts/03_run_neural.py \
           --model siamese --split cold_target --tag t300n30000 --seed 0
@@ -40,7 +42,14 @@ from dti_fusion.train import Prepared, train
 EXP_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(EXP_DIR / "src"))
 from features import EcfpFeatures  # noqa: E402
-from naming import run_name, split_path, subsample_path  # noqa: E402
+from naming import (  # noqa: E402
+    ESM_DEFAULT,
+    ESM_MODELS,
+    arm_name,
+    run_name,
+    split_path,
+    subsample_path,
+)
 from siamese import SiameseModel  # noqa: E402
 
 DATA_DIR = EXP_DIR.parents[1] / "data"
@@ -109,6 +118,12 @@ def main() -> int:
         required=True,
         help="size tag written by 01_subsample.py, e.g. t300n30000",
     )
+    ap.add_argument(
+        "--esm",
+        choices=tuple(ESM_MODELS),
+        default=ESM_DEFAULT,
+        help="protein encoder size; 02_featurize.py must have built that store",
+    )
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--set", "-s", action="append", default=[], metavar="KEY=VALUE")
     args = ap.parse_args()
@@ -120,12 +135,15 @@ def main() -> int:
         f"train.seed={args.seed}",
         "drug.encoder=chemberta",  # names the cache; "ecfp" bypasses it entirely
         "drug.chemberta.finetune=false",
+        f"protein.esm_model={ESM_MODELS[args.esm]}",
         f"train.num_workers={os.environ.get('DTI_NUM_WORKERS', 0)}",
         *args.set,
     ]
     cfg = load_config(EXP_DIR / "config.yaml", overrides)
     cfg.train.out_dir = str(EXP_DIR / "runs")
-    cfg.train.run_name = run_name(args.tag, args.split, args.model, args.seed)
+    cfg.train.run_name = run_name(
+        args.tag, args.split, arm_name(args.model, args.esm), args.seed
+    )
 
     device = resolve_device(cfg.train.device)
     prep = build_prepared(cfg, device, args.tag, args.split, args.seed, drug_feature)
