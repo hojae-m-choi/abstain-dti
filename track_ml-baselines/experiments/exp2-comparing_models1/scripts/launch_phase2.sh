@@ -35,7 +35,8 @@ status)
   echo "=== gpu ==="
   nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader
   echo "=== load (cores: $(nproc)) ==="; uptime
-  echo "=== finished: $(ls runs/*/metrics.json 2>/dev/null | wc -l) / $TOTAL_RUNS ==="
+  # this tag only -- runs from other sizes live in the same folder
+  echo "=== finished: $(ls runs/${TAG}_*/metrics.json 2>/dev/null | wc -l) / $TOTAL_RUNS ==="
   for f in logs/${TAG}_*.log; do
     [ -f "$f" ] || continue
     printf '  %-45s %s\n' "$(basename "$f" .log)" "$(grep -cE '^epoch' "$f" || true) epochs"
