@@ -393,5 +393,228 @@
         }
       }
     }
+  },
+  "t600n100000": {
+    "top_targets": 600,
+    "requested_pairs": 100000,
+    "pairs": 100000,
+    "drugs": 95166,
+    "targets": 600,
+    "pos_rate": 0.65529,
+    "distinct_residues": 377692,
+    "splits": {
+      "cold_drug": {
+        "0": {
+          "train": {
+            "pairs": 80060,
+            "drugs": 76133,
+            "targets": 600
+          },
+          "val": {
+            "pairs": 9975,
+            "drugs": 9517,
+            "targets": 600
+          },
+          "test": {
+            "pairs": 9965,
+            "drugs": 9516,
+            "targets": 600
+          }
+        },
+        "1": {
+          "train": {
+            "pairs": 80011,
+            "drugs": 76133,
+            "targets": 600
+          },
+          "val": {
+            "pairs": 9989,
+            "drugs": 9517,
+            "targets": 600
+          },
+          "test": {
+            "pairs": 10000,
+            "drugs": 9516,
+            "targets": 599
+          }
+        },
+        "2": {
+          "train": {
+            "pairs": 80047,
+            "drugs": 76133,
+            "targets": 600
+          },
+          "val": {
+            "pairs": 9970,
+            "drugs": 9517,
+            "targets": 600
+          },
+          "test": {
+            "pairs": 9983,
+            "drugs": 9516,
+            "targets": 600
+          }
+        }
+      },
+      "scaffold": {
+        "0": {
+          "train": {
+            "pairs": 80000,
+            "drugs": 75166,
+            "targets": 600
+          },
+          "val": {
+            "pairs": 10000,
+            "drugs": 10000,
+            "targets": 600
+          },
+          "test": {
+            "pairs": 10000,
+            "drugs": 10000,
+            "targets": 600
+          }
+        },
+        "1": {
+          "train": {
+            "pairs": 80000,
+            "drugs": 75166,
+            "targets": 600
+          },
+          "val": {
+            "pairs": 10000,
+            "drugs": 10000,
+            "targets": 600
+          },
+          "test": {
+            "pairs": 10000,
+            "drugs": 10000,
+            "targets": 600
+          }
+        },
+        "2": {
+          "train": {
+            "pairs": 80000,
+            "drugs": 75166,
+            "targets": 600
+          },
+          "val": {
+            "pairs": 10000,
+            "drugs": 10000,
+            "targets": 600
+          },
+          "test": {
+            "pairs": 10000,
+            "drugs": 10000,
+            "targets": 596
+          }
+        }
+      },
+      "cold_target": {
+        "0": {
+          "train": {
+            "pairs": 79766,
+            "drugs": 76488,
+            "targets": 480
+          },
+          "val": {
+            "pairs": 10244,
+            "drugs": 10190,
+            "targets": 60
+          },
+          "test": {
+            "pairs": 9990,
+            "drugs": 9968,
+            "targets": 60
+          }
+        },
+        "1": {
+          "train": {
+            "pairs": 78279,
+            "drugs": 75392,
+            "targets": 480
+          },
+          "val": {
+            "pairs": 10764,
+            "drugs": 10704,
+            "targets": 60
+          },
+          "test": {
+            "pairs": 10957,
+            "drugs": 10888,
+            "targets": 60
+          }
+        },
+        "2": {
+          "train": {
+            "pairs": 80080,
+            "drugs": 77025,
+            "targets": 480
+          },
+          "val": {
+            "pairs": 9116,
+            "drugs": 9095,
+            "targets": 60
+          },
+          "test": {
+            "pairs": 10804,
+            "drugs": 10737,
+            "targets": 60
+          }
+        }
+      },
+      "cold_both": {
+        "0": {
+          "train": {
+            "pairs": 64689,
+            "drugs": 62203,
+            "targets": 480
+          },
+          "val": {
+            "pairs": 1108,
+            "drugs": 1101,
+            "targets": 60
+          },
+          "test": {
+            "pairs": 889,
+            "drugs": 884,
+            "targets": 60
+          }
+        },
+        "1": {
+          "train": {
+            "pairs": 64385,
+            "drugs": 61953,
+            "targets": 480
+          },
+          "val": {
+            "pairs": 1041,
+            "drugs": 1036,
+            "targets": 60
+          },
+          "test": {
+            "pairs": 873,
+            "drugs": 870,
+            "targets": 60
+          }
+        },
+        "2": {
+          "train": {
+            "pairs": 64040,
+            "drugs": 61393,
+            "targets": 480
+          },
+          "val": {
+            "pairs": 1054,
+            "drugs": 1049,
+            "targets": 60
+          },
+          "test": {
+            "pairs": 984,
+            "drugs": 981,
+            "targets": 60
+          }
+        }
+      }
+    }
   }
 }
